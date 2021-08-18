@@ -836,7 +836,7 @@ ninja1.feint();
 ninja2.feint();
 ninja2.feint();
 ninja1.getFeints(); // 1
-ninja1.getFeints(); // 2
+ninja2.getFeints(); // 2
 ```
 
 Благодаря `new` был создан новый экземпляр объекта со своим контекстом и областью видимости.
@@ -938,7 +938,7 @@ sayName('Louis-Ferdinand');
 
    для этого создается `новый` контекст выполнения и размещается на вершине стека!
 
-3. Так как `sayName()` в свою очередь вызывает `report(), то контекст выполнения `sayName()` прерывается
+3. Так как `sayName()` в свою очередь вызывает `report()`, то контекст выполнения `sayName()` прерывается
 
    и создается новый для `report().
 
@@ -1168,3 +1168,238 @@ imposter.getFeints = ninja1.getFeints; // undefined !!!!
 - для имитации закрытых объектных переменных
 
 - для приминения колбэков
+
+### `1.9 - Функции - Генераторы и Promise`
+
+---
+
+`Генератор` - функция особого типа. Обычные функции вычисляют и возвращают не больше одного значения
+
+при выполнении от начала и до конца.
+
+Генераторы могут вычислять и возвращать по несколько значений (одно! для каждого запроса),
+
+приостанавливая свое выполнение между запросами.
+
+`Promise` - новый встроенный тип объектов, помогающий работать с асинхронным кодом.
+
+Это, `обязательство`, заполнитель значения, которого еще нет, но ожидается в будущем моменте.
+
+В `JS` однопоточная модель выполнения кода. Пока операция не выполнится, изменения интерфейса блокируется.
+
+Избегают этого с помощью `колбеков`, которые будут работать по принципу `if .. else`
+
+```
+getDataJSON( 'ninja.json', function(err, ninjas) {
+  if(err) {
+    //....
+    return
+  }
+  getDataJSON(ninjas[0].names, function(err, mission) {
+    ....
+  })
+})
+
+```
+
+Перепишем с помощью генератора и разберем в будущем:
+
+```
+async (function* () {
+  try {
+    const ninjas = yield getData('ninjas.json');
+    const missions = yield getData(ninjas[0].missions);
+    // ....
+
+  } catch (error) {
+    // handle error
+  }
+})
+
+```
+
+### `1.10 - Функции - Генераторы`
+
+---
+
+`Генератор` - функция, генерирующая последовательность значений, но не сразу, а по запросу.
+
+Она либо возвращает значение, либо говорить, что генерировать больше нечего.
+
+После генерирования конкретного значения, функция не завершает работу, а лишь приостанавливает
+
+и при новом вызове начинает с места остановки.
+
+```
+function* NamesGenertor() {
+  yield 'Bob';
+  yield 'Homer';
+  yield 'Louis-Ferdinand';
+}
+
+for (let name of NamesGenertor()) {
+  console.log(name);
+}
+
+// Bob
+// Homer
+// Louis-Ferdinand
+```
+
+У функции-генератора нет оператора `return`. Ее вызов не приводит в возврату значения!!!
+
+Вызов приводит к созданию объекта, называемого `итератором`.
+
+У `итератора` есть метод `next()`, который вызывает выполнение кода в `генераторе`,
+
+пока он не натолкнется на ключевое слово `yield`.
+
+Получаем промежуточные результат (то есть один из сгенерируемых элементов) и возвращаем
+
+`новый объект`, сообщающий завершена ли работа или можно дальше генерировать.
+
+Свойство `done` будет `false` так как работа не завершена, а приостановлена без блокировки кода.
+
+В конце концов, генератор вернет значение {`value: undefined}` и выполнено `{done: true}`
+
+```
+function* NamesGenertor() {
+  yield 'Bob';
+  yield 'Homer';
+  yield 'Louis-Ferdinand';
+}
+
+const namesIterator = NamesGenertor();
+
+let item = namesIterator.next();
+
+console.log(item);
+// {value: "Bob", done: false}
+```
+
+```
+function* NamesGenertor() {
+  yield 'Bob';
+  yield 'Homer';
+  yield 'Louis-Ferdinand';
+}
+
+const namesIterator = NamesGenertor();
+let item;
+
+while (!(item = namesIterator.next()).done) { // item.done !== true;
+  console.log(item);
+}
+
+// {value: "Bob", done: false}
+// {value: "Homer", done: false}
+// {value: "Louis-Ferdinand", done: false}
+```
+
+Вот таким образом и работает метод перебора массива `for-of`.
+
+У него есть `итератор`, который и вызывает `next()` автоматически
+
+- ### `Поручение выполнения другому генератору`
+
+Все пройдет как в обычном порядке. Методу `next()` все равно, что он перепоручен.
+
+```
+function* NamesGenertor() {
+  yield 'Bob';
+  yield 'Homer';
+  yield* frenchGenerator();
+  yield 'Sokrat';
+}
+function* frenchGenerator() {
+  yield 'Louis-Ferdinand';
+  yield 'Jean-Paul Sartre';
+}
+
+for (let name of NamesGenertor()) {
+  console.log(name);
+}
+// Bob
+// Homer
+// Louis-Ferdinand
+// Jan-Paul Sartre
+// Sokrat
+```
+
+- ## `Использование генератора`
+
+- `Создамим генератор уникальных идентификаторов` без глобальной переменной:
+
+Здесь бесконечный цикл безопасен, так как до последующего вызова
+
+метода `next()` выполнение работы генератора приостанавливается
+
+```
+function* IdGenerator() {
+  let id = 0;
+  while (true) {
+    //бесконечный цикл генерации id по вызову !!!
+    yield ++id;
+  }
+}
+
+const idIterator = IdGenerator();  // создадим объект-итератор
+
+const ninja1 = {
+  id: idIterator.next().value,  // 1
+};
+const ninja2 = {
+  id: idIterator.next().value,  // 2
+};
+const ninja3 = {
+  id: idIterator.next().value,  // 3
+};
+```
+
+- `Обход модели DOM`
+
+1. Обычный подход
+
+Создадим рекурсивную функцию, бходящую модель `DOM` в рамках указанного идентификатора:
+
+```
+function traverseDOM(element, callback) {
+  callback(element);
+  element = element.firstElementChild;
+  while (element) {
+    traverseDOM(element, callback);
+    element = element.nextElementSibling;
+  }
+}
+
+const subTree = document.querySelector('.section-center');
+traverseDOM(subTree, (elem) =>
+  console.log(
+    `Element ${elem.nodeName} has classList: ${
+      elem.classList.length > 0 ? elem.classList : 'Ups, no classes'
+    }`
+  )
+);
+```
+
+2. Итератор, позволяющий избежать колбеков
+
+```
+function* DomTraversal(element) {
+  yield element;
+  element = element.firstElementChild;
+  while (element) {
+    yield* DomTraversal(element);
+    element = element.nextElementSibling;
+  }
+}
+
+const subTree = document.querySelector('.section-center');
+
+for (let elem of DomTraversal(subTree)) {
+  console.log(elem.nodeName);
+
+  if (elem.classList.contains('demo'))
+    console.log(`${elem.nodeName}: ${elem.textContent}`);
+}
+```
