@@ -1403,3 +1403,218 @@ for (let elem of DomTraversal(subTree)) {
     console.log(`${elem.nodeName}: ${elem.textContent}`);
 }
 ```
+
+### `1.11 - Функции - Promise`
+
+---
+
+Понятие `Promise` было введено, чтобы упростить решение асинхронных задач.
+
+`Promise` - заполнитель значения, которое отсутствует в настоящий момент, но появится потом.
+
+`Promise` гарантирует, что результат асинхронного вычисления в конечном итоге станет известным.
+
+Выполнен промис и получили значение, иначе получено извинение в виде ошибки!
+
+```
+const person = new Promise((resolve, reject) => {
+  resolve('Louis-Ferdinand');
+  // reject('Ups, Error!');
+});
+```
+
+Вызываем метод `then()` и передаем ему два колбека
+первый вызовется, если промис выполнен
+То есть у нас в аргумент первого колбека попадает то, что вернул` resolve()`
+
+```
+person.then(
+  (name) => {
+    if (name === 'Louis-Ferdinand') {
+      console.log('We promised Louis-Ferdinand');
+    }
+  },
+  (err) => console.log(err)
+);
+
+// We promised Louis-Ferdinand
+```
+
+1. Для создания промиса используем операцию `new` и встроенный конструктор объектов типа `Promise`.
+
+2. Конструктору передается функция-исполнитель с двумя параметрами: `resolve` & `reject`.
+
+3. Исполнитель вызывается `немендленно` при конструировании объекта и ему в качестве аргументов
+
+   передаются два колбека: `resolve` & `reject`.
+
+4. `resolve` вызывается вручную, если требуется выполнить обещание
+
+   `reject` - для ошибки.
+
+Асинхронный код нужен, чтобы исключить блокирование работы приложения.
+
+Пользователь не должен ждать... Раньше это решалось с помощью обратных вызовов. Целой цепи
+
+обратных вызовов. Писались библиотеки и разнились подходы...
+
+Поэтому появился `Promise`....
+
+Сразу после создания `Promise` находится в состоянии "ожидания разрешения".
+
+Если в ходе выполнения кода вызывается функция `resolve()`, то он переходит
+
+в состояние "разрешено". Если `reject()`, то в "отклонено". Обещеное значение получить
+
+нельзя, но хоть известна причина.
+
+```
+const marker = false;
+
+const person = new Promise((resolve, reject) => {
+  if (marker) {
+    resolve('Louis-Ferdinand');
+  } else {
+    reject('Ups, Error!');
+  }
+});
+```
+
+Теперь мы передаем в `then()` два колбека.
+
+Один для успеха, второй - для отклонения и ошибки.
+
+```
+person.then(
+  (name) => console.log(name),
+  (err) => console.log(err),
+)
+```
+
+Но красивее использовать метод `catch()`
+
+```
+person
+  .then((name) => console.log('We promised ' + name))
+  .catch((err) => console.log(err));
+```
+
+Методы равнозначны для использования, но метод `catch()` нагляднее демонстрирует цепочку.
+
+До сих пор мы явно (вручную) генерировали ошибку.
+
+Но она может обрабатываться и неявно.
+
+```
+const person = new Promise((resolve, reject) => {
+counter++;
+});
+
+person
+  .then((name) => console.log('We promised ' + name))
+  .catch((err) => console.log(err));
+
+  // ReferenceError: counter is not defined
+```
+
+Мы снова словили в промисе ошибку, когда пытались инкрементировать необявленную
+
+переменную `counter`. Здесь возникло исключение и мы его словили без вызова `reject()`
+
+### `Запрос для сервера`
+
+Это основное использование промисов.
+
+Привидем пример в старом синтаксисе:
+
+```
+function getJSON(url) {
+  return new Promise((resolve, reject) => {
+    const request = new XMLHttpRequest();
+    request.open('GET', url); // инициализировать запрос
+
+    // зарегистрируем обработчик событий
+    request.onload = function () {
+      try {
+        if (this.status === 200) {
+          // сервер ответил с нужным статусом
+          resolve(JSON.parse(this.response));
+        } else {
+          // проблемы с сервером
+          reject(this.status + ' ' + this.statusText);
+        }
+      } catch (error) {
+        // синтаксические ошибки, другое состояние ответа
+        reject(error.message);
+      }
+    };
+    // при обмене с сервером ошибки пошли
+    request.onerror = function () {
+      reject(this.status + ' ' + this.statusText);
+    };
+
+    // отправить запрос серверу
+    request.send();
+  });
+}
+
+const url =
+  'https://www.thecocktaildb.com/api/json/v1/1/search.php?s=margarita';
+
+getJSON(url)
+  .then((response) => console.log(response))
+  .catch((err) => console.log('Some problem: ' + err));
+```
+
+### `Цепочка промисов`
+
+Дело в том, что в результате вызова `then()` мы также получем новый промис.
+
+И к нему можно применять свой `then()`
+
+```
+getJSON(url)
+  .then( response => response.drinks)
+  .then( drinks => console.log(drinks) )
+  .catch( err => console.log('Some problem: ' + err));
+```
+
+При этом перехват ошибок методом `catch()` произойдет на любом этапе!!!
+
+Метод `Promise.all()`
+
+В данном случае методу передается массив промисов и он создает новый промис, который
+
+выполняется только в том случае, если все промисы выполнены и отклоянется, если хотя бы
+
+один из промисов отклонен.
+
+```
+Promise.all([
+  getJSON(`https://www.thecocktaildb.com/api/json/v1/1/search.php?s=margarita`),
+  getJSON(`https://www.thecocktaildb.com/api/json/v1/1/search.php?i=vodka`),
+  getJSON(`https://www.thecocktaildb.com/api/json/v1/1/lookup.php?i=11007`),
+])
+  .then((results) => {
+    const result_1 = results[0];
+    const result_2 = results[1];
+    const result_3 = results[2];
+  })
+  .catch((err) => console.log(err));
+```
+
+Метод `Promise.race()`
+
+Если нам надо дать задание первому, кто откликнется, кто быстре всех...,
+
+то используем этот метод:
+
+```
+Promise.race([
+  getJSON(`https://www.thecocktaildb.com/api/json/v1/1/search.php?s=margarita`),
+  getJSON(`https://www.thecocktaildb.com/api/json/v1/1/search.php?i=vodka`),
+  getJSON(`https://www.thecocktaildb.com/api/json/v1/1/lookup.php?i=11007`),
+])
+  .then((result) => console.log(result))
+  .catch((err) => console.log(err));
+```
