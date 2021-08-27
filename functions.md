@@ -1618,3 +1618,5 @@ Promise.race([
   .then((result) => console.log(result))
   .catch((err) => console.log(err));
 ```
+
+При этом перехват ошибок методом `catch()` произойдет на любом этапе!!!
