@@ -120,3 +120,73 @@ louis_ferdinand.canWrite(); // true
 ## `1.4-Объекты-Свойства экземпляров`
 
 ---
+
+Когда вызываем функцию через операцию `new`, то создаем новый экземпляр объекта, но его методы
+
+можно определять не только через прототип, но и через параметр `this`.
+
+```
+function Novelist() {
+  this.isWriter = true;
+  this.canWrite = function () {
+    return !this.isWriter;
+  };
+}
+```
+
+Если указать то же свойсто через прототип, то оно не перепишет:
+
+```
+Novelist.prototype.canWrite = function () {
+  return true;
+};
+const louis_ferdinand = new Novelist();
+
+louis_ferdinand.canWrite(); // false
+```
+
+Совойства, созданные в конструкторе непосредственно для экземпляра - приоритетнее.
+
+## `1.5-Объекты-Побочные эффекты динамического характера`
+
+---
+
+Изменим порядок кода.
+
+```
+function Novelist() {
+  this.isWriter = true;
+}
+const louis_ferdinand = new Novelist();
+
+Novelist.prototype.canWrite = function () {
+  return this.isWriter;
+};
+
+louis_ferdinand.canWrite(); // true
+```
+
+Здесь все как обычно.
+
+А теперь полностью перепишем прототип :
+
+```
+Novelist.prototype = {
+  speackFrench: function () {
+    return true;
+  },
+};
+
+sartre = new Novelist();
+
+louis_ferdinand.canWrite(); // true
+louis_ferdinand.speackFrench(); // error
+
+sartre.canWrite(); //error
+sartre.speackFrench(); //true
+
+```
+
+`louis_ferdinand` сохранил ссылку на свой предыдущий прототип, а `sartre` уже основан на
+
+новом. Связь с прототипом утанавливается в момент создания экземпляра.
