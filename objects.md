@@ -245,3 +245,111 @@ sartre instanceof Novelist; // true
 
 sartre.constructor === Novelist; // true
 ```
+
+## `1.7-Объекты-Достижение наследования`
+
+---
+
+`Наследование` - это форма повторного использования кода, в которой новые объекты получают
+
+свойства уже существующих.
+
+Важно не путать наследование с копированием.
+
+```
+function Novelist() {}
+Novelist.prototype.canWrite = function () {
+  return 'Yes, I can write.';
+};
+
+function Singer() {}
+Singer.prototype = { canWrite: Novelist.prototype.canWrite };
+
+const singer1 = new Singer();
+```
+
+Мы не можем таким способом сделать объект `singer1` наследователем `Novelist`.
+
+Мы просто копируем в данном случае свойство.
+
+```
+singer1.canWrite();            // 'Yes, I can write.'
+```
+
+Но все это не имеет отношение к наследованию:
+
+```
+singer1 instanceof Novelist;   // false
+```
+
+По факту:
+
+```
+singer1 instanceof Singer;     // true
+```
+
+В вопросе наследования на самом деле следует создать `цепочку прототипов`.
+
+Что-то вроде:
+
+```
+SubClass.prototype = new SuperClass();
+```
+
+То есть, например, есть класс `Animal` и подкласс `Mammal`:
+
+```
+function Animal() {}
+
+Animal.prototype.canBreathe = function () {
+  return true;
+};
+
+function Mammal() {}
+
+Mammal.prototype = new Animal();
+
+const dog = new Mammal();
+
+```
+
+```
+dog instanceof Mammal; // true
+```
+
+идем выше:
+
+```
+dog instanceof Animal; // true
+```
+
+идем выше:
+
+```
+dog instanceof Object; // true
+```
+
+```
+dog.canBreathe(); // true
+
+typeof dog.canBreathe === 'function'; // true
+```
+
+Здесь функция-конструктор `Animal` создает новый экземпляр и именно он задается в качестве
+
+прототипа для функции-конструктора типа `Mammal`:
+
+```
+Mammal.prototype = new Animal();
+
+```
+
+Связь с собственным [[prototype]] типа `Mammal` обрывается, этот прототип потом будет удален.
+
+Ситуация со свойством `dog.canBreathe(); `
+
+```
+dog.canBreathe(); // true
+```
+
+Вызов идет так: поиск в самом `dog` (нет его )=> `Mammal` (нет его) => `Animal` (а тут нашли)
