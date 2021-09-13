@@ -562,3 +562,185 @@ rembo.constructor === Soldiers; // true
 То есть `НАСТОЯЩАЯ СЕМАНТИКА` операции `instanceof` ориентирована не на поиск функции-конструктора
 
 для экземпляра, а для проверки находится ли этот прототип в цепочке прототипов экземпляра.
+
+## `2 - Объекты - "Классы" стандарта ES6`
+
+---
+
+В `Javascript` наследование происходит с помощью прототипов. Но все хотели классы для большей
+
+абстракции и упрощения системы наследования. Многи стали пользоваться библиотеками-симуляторами
+
+классов, поэтому решили систематизировать синтаксис. "Классы" введены, но система наследования
+
+прототипов осталась под капотом.
+
+```
+class Mammal {
+  constructor(name) {
+    this.name = name;
+  }
+
+  canBreathe() {
+    return true;
+  }
+}
+
+const dog = new Mammal('Fred');
+```
+
+C помощью ключевого слова `class` мы создаем новый класс. С помощью классов можно явно
+
+задать функцию-конструктор, которая и будет вызываться при получении экземпляра объекта.
+
+В конструкторе черз ключевой слово `this` получаем доступ к экземпляру и можем вводить новые свойства,
+
+а в самом теле класса вводим методы, доступные всем экземплярам.
+
+```
+dog instanceof Mammal; // true
+dog.name; // 'Fred'
+dog.canBreathe(); // true
+```
+
+Все это синтаксической удобство под капотом выглядит так:
+
+```
+function Mammal(name) {
+  this.name = name;
+}
+Mammal.prototype.canBreathe = function () {
+  return true;
+};
+
+const dog = new Mammal('Fred');
+```
+
+## `2.1 - Объекты - Статические методы`
+
+---
+
+В классических объектно-ориентированных языках на уровне классов можно определять ститические методы.
+
+```
+class Sportsmen {
+  constructor(name, level) {
+    this.name = name;
+    this.level = level;
+  }
+
+  canBreathe() {
+    return true;
+  }
+
+  static compare(sportsman1, sportsman2) {
+    return sportsman1.level - sportsman2.level;
+  }
+}
+
+const runner1 = new Sportsmen('Bob', 3);
+const runner2 = new Sportsmen('BHomer', 5);
+```
+
+У нас есть статический метод, определяющий уровни спортсменов.
+
+Он определен на уровне класса !!! и не доступен для экземпляров!
+
+```
+runner1.canBreathe(); // true
+runner2.canBreathe(); // true
+```
+
+Но
+
+```
+'compare' in runner1; // false
+'compare' in runner2; // false
+```
+
+Доступ только из класса:
+
+```
+Sportsmen.compare(runner1, runner2); // -2
+
+```
+
+## `2.2 - Объекты - Наследование в ES6`
+
+---
+
+До ЕS6 реализовать наследование без потери конструктора было сложно.
+
+Вот прошлый пример:
+
+```
+function Animal() {}
+
+Animal.prototype.canBreathe = function () {
+  return true;
+};
+
+function Mammal() {}
+
+Mammal.prototype = new Animal();
+
+Object.defineProperty(Mammal.prototype, 'constructor', {
+  enumerable: false,
+  value: Mammal,
+  writable: true,
+});
+
+const dog = new Mammal();
+
+```
+
+На этапе `Mammal.prototype = new Animal();` мы теряем конструктор `Mammal` и потом
+
+болезненно его настраиваем через `Object.defineProperty(....)`.
+
+Теперь все проще:
+
+```
+class Animal {
+  constructor(name) {
+    this.name = name;
+  }
+
+  canBreathe() {
+    return true;
+  }
+}
+
+class Mammal extends Animal {    // ключевое слово "extends" наследует от другого класса
+  constructor(name, age) {
+    super(name);                 // ключевое слово "super" позволяет вызвать конструктор
+    this.age = age;              // базового класса Animal
+  }
+
+  loveMilk() {
+    return true;
+  }
+}
+
+const dog = new Mammal('Fred', 3);
+
+```
+
+Теперь проверим свойства и методы:
+
+```
+dog.constructor === Mammal; // true
+
+dog.constructor === Animal; // false
+
+dog.canBreathe(); // true
+
+dog.name; // 'Fred'
+
+.....
+
+```
+
+Теперь не надо слишком переживать о цепочке прототипов и побочных
+
+эффектах переопределяемых свойств.
