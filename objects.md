@@ -615,3 +615,52 @@ Mammal.prototype.canBreathe = function () {
 
 const dog = new Mammal('Fred');
 ```
+
+## `2.1 - Объекты - Статические методы`
+
+---
+
+В классических объектно-ориентированных языках на уровне классов можно определять ститические методы.
+
+```
+class Sportsmen {
+  constructor(name, level) {
+    this.name = name;
+    this.level = level;
+  }
+
+  canBreathe() {
+    return true;
+  }
+
+  static compare(sportsman1, sportsman2) {
+    return sportsman1.level - sportsman2.level;
+  }
+}
+
+const runner1 = new Sportsmen('Bob', 3);
+const runner2 = new Sportsmen('BHomer', 5);
+```
+
+У нас есть статический метод, определяющий уровни спортсменов.
+
+Он определен на уровне класса !!! и не доступен для экземпляров!
+
+```
+runner1.canBreathe(); // true
+runner2.canBreathe(); // true
+```
+
+Но
+
+```
+'compare' in runner1; // false
+'compare' in runner2; // false
+```
+
+Доступ только из класса:
+
+```
+Sportsmen.compare(runner1, runner2); // -2
+
+```
