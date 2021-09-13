@@ -664,3 +664,83 @@ runner2.canBreathe(); // true
 Sportsmen.compare(runner1, runner2); // -2
 
 ```
+
+## `2.2 - Объекты - Наследование в ES6`
+
+---
+
+До ЕS6 реализовать наследование без потери конструктора было сложно.
+
+Вот прошлый пример:
+
+```
+function Animal() {}
+
+Animal.prototype.canBreathe = function () {
+  return true;
+};
+
+function Mammal() {}
+
+Mammal.prototype = new Animal();
+
+Object.defineProperty(Mammal.prototype, 'constructor', {
+  enumerable: false,
+  value: Mammal,
+  writable: true,
+});
+
+const dog = new Mammal();
+
+```
+
+На этапе `Mammal.prototype = new Animal();` мы теряем конструктор `Mammal` и потом
+
+болезненно его настраиваем через `Object.defineProperty(....)`.
+
+Теперь все проще:
+
+```
+class Animal {
+  constructor(name) {
+    this.name = name;
+  }
+
+  canBreathe() {
+    return true;
+  }
+}
+
+class Mammal extends Animal {    // ключевое слово "extends" наследует от другого класса
+  constructor(name, age) {
+    super(name);                 // ключевое слово "super" позволяет вызвать конструктор
+    this.age = age;              // базового класса Animal
+  }
+
+  loveMilk() {
+    return true;
+  }
+}
+
+const dog = new Mammal('Fred', 3);
+
+```
+
+Теперь проверим свойства и методы:
+
+```
+dog.constructor === Mammal; // true
+
+dog.constructor === Animal; // false
+
+dog.canBreathe(); // true
+
+dog.name; // 'Fred'
+
+.....
+
+```
+
+Теперь не надо слишком переживать о цепочке прототипов и побочных
+
+эффектах переопределяемых свойств.
