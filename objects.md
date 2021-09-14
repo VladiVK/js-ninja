@@ -744,3 +744,70 @@ dog.name; // 'Fred'
 Теперь не надо слишком переживать о цепочке прототипов и побочных
 
 эффектах переопределяемых свойств.
+
+## `3.1 - Объекты - Управление доступом к свойствам объектов через методы получения и установки`
+
+---
+
+Объекты в `Javascript` - это относительно простые коллекции свойств.
+
+Слежение за ходом программы часто состоит в видоизменении этих свойств.
+
+```
+function Animal(name, secretSkill) {
+  this.name = name;
+  this.secretSkill = secretSkill;
+}
+
+const dog = new Animal('Fred', 'bite');
+const cat = new Animal('Nika', 'claw');
+```
+
+Код обычный, но что если нам надо
+
+- застраховаться от присваивания неверного типа
+
+```
+cat.secretSkill = 101; // нам не подходит цифра
+```
+
+- регистрировать все изменения свойства
+
+- отображать в интерфейсе
+
+Похожие методы ранее оговаривались через имитацию закрытых свойств в функции-конструкторе
+
+через замыкания:
+
+```
+function Animal(name, secretSkill) {
+  let skillLevel;
+
+  this.name = name;
+  this.secretSkill = secretSkill;
+
+  this.getSkillLevel = () => {
+    console.log('Skill level was shown');
+    return skillLevel;
+  };
+
+  this.setSkillLevel = (value) => {
+    console.log('Skill level was changed from ' + skillLevel + ' to ' + value);
+    skillLevel = value;
+  };
+}
+```
+
+Создадим экземпляры:
+
+```
+const dog = new Animal('Fred', 'bite');
+const cat = new Animal('Nika', 'claw');
+
+```
+
+У каждого экземпляра свое лексическое окружение, то есть он буде изменять значение `skillLevel`
+
+только в своем варианте.
+
+Сложность в том, что все надо явно указывать, все свойства прописывать.
