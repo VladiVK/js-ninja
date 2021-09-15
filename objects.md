@@ -870,3 +870,145 @@ cat.name;
 ```
 
 Этот метод прост и популярен весьма.
+
+## `3.4 - Объекты - Определение методов получения и установки через классы ES6`
+
+---
+
+Переписать на классы можно и получим все тот же код:
+
+```
+class AnimasCollection {
+  constructor() {
+    this.animals = ['cat', 'dog', 'mouse'];
+  }
+  get firstAnimal() {
+    console.log('Getting first animal');
+    return this.animals[0];
+  }
+  set firstAnimal(value) {
+    console.log('Setting first animal');
+    this.animals[0] = value;
+  }
+}
+
+const animasCollection = new AnimasCollection();
+```
+
+Все это первый из двух способов.
+
+> Важно
+>
+> Если указать только геттер, то есть метод получения, то при попытке установить свойство,
+> в обычном режиме просто ничего не произойдет, а в строгом будет сгенерирована ошибка!
+
+## `3.5 - Объекты - Определение методов получения и установки через Object.defineProperty()`
+
+---
+
+Еще раз важно уточнить, что все эти настройки с методами получения и установки обычно
+
+используются для управления доступом к закрытым свойствам. Увы, но в языке не поддерживаются
+
+закрытые свойства. Мы использовали уже имитацию через замыкания, но это не работает.
+
+Дело в том, что методы через литерал объекта или в классе все рано не создаются в той
+
+области видимости, где и переменная, которую можно было бы использовать как закрытое свойство.
+
+Поэтому есть решение через `Object.defineProperty()`:
+
+```
+
+function Soldiers() {
+  let _secretValue = 0;
+
+  Object.defineProperty(this, 'secretValue', {
+    get: () => _secretValue,
+
+    set: (value) => (_secretValue = value),
+  });
+}
+
+const rembo1 = new Soldiers();
+const rembo2 = new Soldiers();
+
+```
+
+Здесь все внешне работает как прежде:
+
+```
+rembo1.secretValue; // 0
+rembo1.secretValue = 10;
+```
+
+Здесь, в отличие от литералов объектов и классов, методы `get()` и `set()` создаются
+
+через `Object.defineProperty()` в той же области видимости, где и "закрытая" переменная.
+
+## `3.6 - Объекты - Применение методов получения и установки для проверки достоверности свойств`
+
+---
+
+Все эти удобства с методами установки используют, когда надо проверить значение свойства.
+
+То есть не позволять мелким багам ломать приложение. То есть, например, ввод должен быть числом,
+
+а не строкой.
+
+```
+function Soldiers() {
+  let _secretValue = 0;
+
+  Object.defineProperty(this, 'secretValue', {
+
+    get: () => _secretValue,
+
+    set: (value) => {
+      if (!Number.isInteger(value)) {
+        throw new TypeError('Secret value should be a number!');
+      }
+      _secretValue = value;
+    },
+  });
+}
+
+const rembo1 = new Soldiers();
+const rembo2 = new Soldiers();
+
+rembo1.secretalue = 'cu-cu'; // Uncaught TypeError: Secret value should be a number!
+
+
+
+```
+
+## `3.7 - Объекты - Применение методов получения и установки для вычисляемых свойств`
+
+---
+
+Здесь все как обычно. И ничем не отличается от простого метода, например, `getFullInfo`,
+
+который можно было бы создать. Использовать код ниже - это на усмотрение.
+
+Но пример просто приведем:
+
+```
+const person = {
+  name: 'Louis-Ferdinand',
+  language: 'French',
+
+  get fullInfo() {
+    return `${this.name} speak ${this.language}`;
+  },
+  set fullInfo(value) {
+    const segments = value.split(' ');
+    this.name = segments[0];
+    this.language = segments[1];
+  },
+};
+
+person.fullInfo; // 'Louis-Ferdinand speak French'
+
+person.fullInfo = 'Bob english';
+person.fullInfo; // 'Bob speak english'
+```
