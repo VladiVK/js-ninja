@@ -219,3 +219,83 @@ animals.sort((a, b) => {
 значение аккумулятора, накопленное в результате всех предыдущих вызовов и значение
 
 текущего элемента.
+
+- `Повторное использование встроенных методов обработки массивов`
+
+Иногда требуется создать объект, содержащий коллекцию данных.
+
+Массив удобен, когда важна сама коллекция, но иногда более важно хранить
+
+кроме коллекции еще и метаданные о ее состоянии.
+
+Есть обычный html:
+
+```
+      <div class="input-container">
+        <input type="text" id="first" />
+        <input type="text" id="second" />
+        <input type="text" id="third" />
+      </div>
+```
+
+Далее создадим обычный объект для имитации поведения массива.
+
+Определим в нем свойство `length` - это количество элементов в массиве.
+
+Добавим методы, работающие как в массиве:
+
+```
+const elems = {
+  length: 0, // счетчик элементов в массиве(объекте)
+
+  // берем метод из прототипа Array
+  add: function (elem) {
+    Array.prototype.push.call(this, elem);
+  },
+
+  gather: function (id) {
+    this.add(document.getElementById(id));
+  },
+
+  find: function (callback) {
+    return Array.prototype.find.call(this, callback);
+  },
+};
+
+```
+
+Работает это так:
+
+```
+elems.gather('first');
+elems.gather('second');
+elems.gather('third');
+```
+
+Теперь у нас объект:
+
+```
+{
+  0: input#first
+  1: input#second
+  2: input#third
+
+   add: ƒ (elem)
+   find: ƒ (callback)
+   gather: ƒ (id)
+
+  length: 3
+}
+
+```
+
+```
+let searchResult = elems.find((elem) => elem.id === 'second');
+
+searchResult // <input type="text" id="second" />
+
+```
+
+Все это позволяет повторно использовать уже готовый встороенные функции и
+
+не изобретать колесо.
